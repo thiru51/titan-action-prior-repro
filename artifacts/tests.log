@@ -1,0 +1,5 @@
+Captured 2026-08-30 03:49 UTC by running:
+    pixi run pytest -q tests
+
+..s..........................................                            [100%]
+44 passed, 1 skipped in 3.12s

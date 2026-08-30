@@ -1,0 +1,63 @@
+# Defaults follow the paper's protocol: 10 Hz annotations, 1 s observed,
+# 2 s forecast, errors in pixels at 1920x1200.
+
+priors:
+  ego: true
+  interaction: true
+  action: true
+
+data:
+  root: data/titan
+  annotations_subdir: titan_0_4
+  images_subdir: images_anonymized
+  imu_subdir: imu_data
+  splits_subdir: splits
+  obs_len: 10
+  pred_len: 20
+  max_agents: 16
+  clip_frames: 16
+  crop_size: 112
+  load_video: true
+  strict_split_sizes: true
+  # "auto" scales off os.cpu_count(); an int pins it. Override: --num-workers.
+  num_workers: auto
+  prefetch_factor: 4
+
+model:
+  traj_hidden: 128
+  ego_hidden: 64
+  action_feat_dim: 128
+  interaction_dim: 128
+  decoder_hidden: 128
+  dropout: 0.1
+  # torchvision substitute for the paper's I3D; see README.
+  action_backbone: r3d_18
+  pretrained_backbone: true
+  freeze_backbone: false
+
+train:
+  epochs: 20
+  # "auto" scales off detected VRAM; an int pins it. Override: --batch-size.
+  batch_size: auto
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  grad_clip: 5.0
+  action_loss_weight: 1.0
+  ego_loss_weight: 1.0
+  seed: 0
+  device: auto
+  # Mixed precision on CUDA: bf16 where supported, otherwise fp16 with a scaler.
+  # ADE/FDE are computed in fp32 regardless.
+  amp: true
+  # torch.compile. Off by default: it costs real time up front and only pays
+  # back on a long run.
+  compile: false
+  out_dir: checkpoints
+  log_every: 20
+
+synthetic:
+  # Turn on only for the smoke test. Numbers from synthetic data are meaningless.
+  enabled: false
+  num_clips: 12
+  agents_per_clip: 6
+  seed: 0

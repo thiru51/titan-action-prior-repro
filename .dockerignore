@@ -1,0 +1,21 @@
+# Without this the build context includes .pixi, which is ~9 GB, and every
+# `docker build` spends minutes uploading an environment the image rebuilds
+# from requirements.txt anyway.
+.pixi/
+.venv/
+venv/
+
+data/
+checkpoints/
+runs/
+outputs/
+*.pt
+*.pth
+*.ckpt
+
+.git/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

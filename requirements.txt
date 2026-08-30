@@ -1,0 +1,19 @@
+# For the venv + pip install path. The pixi path (pixi.toml / pixi.lock) is the
+# one that is fully pinned; this file gives lower bounds that are known to work.
+#
+# torch and torchvision are NOT pinned to a CUDA build here on purpose: plain
+# `pip install torch` gives you whatever wheel matches your platform, which on
+# Linux is a CUDA build but on macOS is CPU-only. If pip hands you a CPU-only
+# wheel on a machine that has a GPU, install from the CUDA index instead:
+#
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu129
+#
+# scripts/check_gpu.py prints "built for CUDA ..." so you can tell which you got.
+
+torch>=2.2
+torchvision>=0.17
+numpy>=1.26
+pandas>=2.0
+pyyaml>=6.0
+pillow>=10.0
+pytest>=8.0

@@ -1,0 +1,38 @@
+# Data and outputs
+data/
+checkpoints/
+runs/
+outputs/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.tar
+*.npz
+
+# Environments
+.pixi/
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Local config and secrets
+.env
+*.local.yaml
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store

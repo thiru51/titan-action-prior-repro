@@ -1,0 +1,138 @@
+Captured 2026-08-30 03:49 UTC by running:
+    pixi run python -m titan.cli smoke --config configs/default.yaml
+
+THIS IS SYNTHETIC DATA. The FDE numbers below are the pipeline talking to
+itself on random walks -- they verify that every ablation path runs end to
+end, and they say nothing whatsoever about the paper's results. No run
+against the real TITAN dataset has happened; access has not been granted.
+
+========================================================================
+SMOKE TEST -- synthetic data, no real TITAN involved.
+Checks that data -> action branch -> interaction -> AIM -> GRU -> FDE
+runs end to end and produces finite numbers. Nothing here reproduces
+the paper. See README for the paper's actual reported results.
+========================================================================
+
+--- vanilla ---
+priors: vanilla  trainable params: 247,853
+device: cuda (NVIDIA GeForce RTX 4080 Laptop GPU, sm_89, 11.6 GB)  precision: bf16  tf32: True
+batch size: 2  dataloader workers: 0  compile: False
+!! SYNTHETIC DATA -- pipeline smoke test only, results are meaningless
+  epoch 0 step 0/4 traj=0.4539 total=0.4539
+epoch 0: train_loss=0.3862 val_ADE=206.12px val_FDE=347.29px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.3s, 29.8 samples/s, peak 0.02 GB]
+  epoch 1 step 0/4 traj=0.2974 total=0.2974
+epoch 1: train_loss=0.2776 val_ADE=119.67px val_FDE=279.73px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.0s, 259.8 samples/s, peak 0.02 GB]
+total wall clock 0.4s, peak VRAM 0.02 GB
+
+These numbers come from SYNTHETIC data. They say the pipeline runs; they say nothing about the paper's results.
+
+--- AP ---
+priors: AP  trainable params: 33,500,951
+device: cuda (NVIDIA GeForce RTX 4080 Laptop GPU, sm_89, 11.6 GB)  precision: bf16  tf32: True
+batch size: 2  dataloader workers: 0  compile: False
+action backbone: r3d_18 (substitute for I3D, see README)
+!! SYNTHETIC DATA -- pipeline smoke test only, results are meaningless
+  epoch 0 step 0/4 traj=0.5120 action=9.5117 total=10.0237
+epoch 0: train_loss=9.9722 val_ADE=816.07px val_FDE=1811.81px val_FIOU=0.0000 (const-vel FDE=31.03px) [2.2s, 3.6 samples/s, peak 1.69 GB]
+  epoch 1 step 0/4 traj=0.2874 action=8.7104 total=8.9978
+epoch 1: train_loss=8.7858 val_ADE=696.55px val_FDE=1539.48px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.6s, 13.7 samples/s, peak 1.69 GB]
+total wall clock 3.5s, peak VRAM 1.69 GB
+
+These numbers come from SYNTHETIC data. They say the pipeline runs; they say nothing about the paper's results.
+
+--- EP ---
+priors: EP  trainable params: 281,197
+device: cuda (NVIDIA GeForce RTX 4080 Laptop GPU, sm_89, 11.6 GB)  precision: bf16  tf32: True
+batch size: 2  dataloader workers: 0  compile: False
+!! SYNTHETIC DATA -- pipeline smoke test only, results are meaningless
+  epoch 0 step 0/4 traj=0.6945 ego=0.9840 total=1.6785
+epoch 0: train_loss=1.4243 val_ADE=1729.70px val_FDE=3249.72px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.2s, 46.5 samples/s, peak 0.02 GB]
+  epoch 1 step 0/4 traj=0.4101 ego=0.8708 total=1.2808
+epoch 1: train_loss=1.1735 val_ADE=949.45px val_FDE=1582.59px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.0s, 222.6 samples/s, peak 0.02 GB]
+total wall clock 0.3s, peak VRAM 0.02 GB
+
+These numbers come from SYNTHETIC data. They say the pipeline runs; they say nothing about the paper's results.
+
+--- IP ---
+priors: IP  trainable params: 413,489
+device: cuda (NVIDIA GeForce RTX 4080 Laptop GPU, sm_89, 11.6 GB)  precision: bf16  tf32: True
+batch size: 2  dataloader workers: 0  compile: False
+!! SYNTHETIC DATA -- pipeline smoke test only, results are meaningless
+  epoch 0 step 0/4 traj=0.8583 total=0.8583
+epoch 0: train_loss=0.5553 val_ADE=416.49px val_FDE=680.85px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.0s, 221.4 samples/s, peak 0.03 GB]
+  epoch 1 step 0/4 traj=0.2952 total=0.2952
+epoch 1: train_loss=0.2735 val_ADE=363.17px val_FDE=813.09px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.0s, 238.8 samples/s, peak 0.03 GB]
+total wall clock 0.1s, peak VRAM 0.03 GB
+
+These numbers come from SYNTHETIC data. They say the pipeline runs; they say nothing about the paper's results.
+
+--- EP+AP ---
+priors: EP+AP  trainable params: 33,534,295
+device: cuda (NVIDIA GeForce RTX 4080 Laptop GPU, sm_89, 11.6 GB)  precision: bf16  tf32: True
+batch size: 2  dataloader workers: 0  compile: False
+action backbone: r3d_18 (substitute for I3D, see README)
+!! SYNTHETIC DATA -- pipeline smoke test only, results are meaningless
+  epoch 0 step 0/4 traj=0.4610 ego=0.8239 action=9.6523 total=10.9373
+epoch 0: train_loss=10.7948 val_ADE=673.93px val_FDE=1500.47px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.6s, 13.9 samples/s, peak 1.69 GB]
+  epoch 1 step 0/4 traj=0.2116 ego=0.8405 action=9.0046 total=10.0567
+epoch 1: train_loss=9.6740 val_ADE=593.69px val_FDE=1257.17px val_FIOU=0.0006 (const-vel FDE=31.03px) [0.6s, 13.6 samples/s, peak 1.69 GB]
+total wall clock 1.9s, peak VRAM 1.69 GB
+
+These numbers come from SYNTHETIC data. They say the pipeline runs; they say nothing about the paper's results.
+
+--- EP+IP ---
+priors: EP+IP  trainable params: 446,833
+device: cuda (NVIDIA GeForce RTX 4080 Laptop GPU, sm_89, 11.6 GB)  precision: bf16  tf32: True
+batch size: 2  dataloader workers: 0  compile: False
+!! SYNTHETIC DATA -- pipeline smoke test only, results are meaningless
+  epoch 0 step 0/4 traj=0.5866 ego=0.9808 total=1.5675
+epoch 0: train_loss=1.2715 val_ADE=1633.05px val_FDE=3935.34px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.0s, 171.5 samples/s, peak 0.03 GB]
+  epoch 1 step 0/4 traj=0.3640 ego=0.8721 total=1.2361
+epoch 1: train_loss=1.2158 val_ADE=457.55px val_FDE=1112.10px val_FIOU=0.0011 (const-vel FDE=31.03px) [0.0s, 172.3 samples/s, peak 0.03 GB]
+total wall clock 0.2s, peak VRAM 0.03 GB
+
+These numbers come from SYNTHETIC data. They say the pipeline runs; they say nothing about the paper's results.
+
+--- EP+IP+AP ---
+priors: EP+IP+AP  trainable params: 33,716,315
+device: cuda (NVIDIA GeForce RTX 4080 Laptop GPU, sm_89, 11.6 GB)  precision: bf16  tf32: True
+batch size: 2  dataloader workers: 0  compile: False
+action backbone: r3d_18 (substitute for I3D, see README)
+!! SYNTHETIC DATA -- pipeline smoke test only, results are meaningless
+  epoch 0 step 0/4 traj=0.7914 ego=0.8145 action=9.4421 total=11.0480
+epoch 0: train_loss=10.9347 val_ADE=906.57px val_FDE=1571.22px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.6s, 13.5 samples/s, peak 1.69 GB]
+  epoch 1 step 0/4 traj=0.3028 ego=0.7931 action=8.7000 total=9.7959
+epoch 1: train_loss=10.0152 val_ADE=506.26px val_FDE=713.71px val_FIOU=0.0000 (const-vel FDE=31.03px) [0.6s, 13.6 samples/s, peak 1.69 GB]
+total wall clock 1.9s, peak VRAM 1.69 GB
+
+These numbers come from SYNTHETIC data. They say the pipeline runs; they say nothing about the paper's results.
+
+Synthetic-data FDE by prior configuration (NOT the paper's numbers):
+  vanilla      279.73 px  [synthetic]
+  AP          1539.48 px  [synthetic]
+  EP          1582.59 px  [synthetic]
+  IP           680.85 px  [synthetic]
+  EP+AP       1257.17 px  [synthetic]
+  EP+IP       1112.10 px  [synthetic]
+  EP+IP+AP     713.71 px  [synthetic]
+
+Paper's actual reported results, for reference only:
+TITAN paper, Table 2 -- REPORTED BY THE AUTHORS, not measured here.
+Malla, Dariush & Choi. TITAN: Future Forecast using Action Priors. CVPR 2020. arXiv:2003.13886
+
+  method                        ADE      FDE     FIOU
+  ----------------------------------------------------
+  Const-Vel (w/o scaling)     44.39   102.47   0.1567
+  Const-Vel (w/ scaling)      44.39   102.47   0.1692
+  Social-LSTM                 37.01    66.78        -
+  Social-GAN                  35.41    69.41        -
+  ----------------------------------------------------
+  TITAN_vanilla               38.56    72.42   0.3233
+  TITAN_AP                    33.54    55.80   0.3670
+  TITAN_EP                    29.42    41.21   0.4010
+  TITAN_IP                    22.53    32.80   0.5589
+  TITAN_EP+AP                 26.03    38.78   0.5360
+  TITAN_EP+IP                 17.79    27.69   0.5650
+  TITAN_EP+IP+AP              11.32    19.53   0.6559
+
+  ADE/FDE in pixels at 1920x1200. Lower is better; FIOU higher is better.

@@ -1,0 +1,36 @@
+[workspace]
+name = "titan-action-prior-repro"
+version = "0.1.0"
+description = "Reproduction attempt of TITAN (Malla, Dariush & Choi, CVPR 2020)"
+channels = ["conda-forge", "pytorch", "nvidia"]
+platforms = [{ name = "cuda-linux-64", platform = "linux-64", cuda = "12.0" }]
+
+[dependencies]
+python = "~=3.11.0"
+numpy = ">=1.26"
+pandas = ">=2.0"
+pyyaml = ">=6.0"
+# Used directly by data/video.py to decode the frame PNGs, so it is declared
+# here rather than leaned on as a torchvision transitive.
+pillow = ">=10.0"
+pytest = ">=8.0"
+
+[target.linux-64.dependencies]
+pytorch-gpu = ">=2.2"
+torchvision = ">=0.17"
+# torch routes some backward ops (e.g. the outer product behind AIM's weighted
+# pool) through Triton, which JIT-compiles a helper that includes cuda.h. The
+# runtime packages alone do not ship that header and the compile fails at the
+# first backward pass.
+cuda-cudart-dev = "12.*"
+
+[tasks]
+gpu = "python scripts/check_gpu.py"
+smoke = "python -m titan.cli smoke --config configs/default.yaml"
+train = "python -m titan.cli train --config configs/default.yaml"
+eval = "python -m titan.cli eval --config configs/default.yaml"
+ablation = "python -m titan.cli ablation --config configs/default.yaml"
+test = "pytest -q tests"
+
+[activation.env]
+PYTHONPATH = "src"

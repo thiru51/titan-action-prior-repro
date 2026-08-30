@@ -1,0 +1,33 @@
+Captured 2026-08-30 03:49 UTC by running:
+    pixi run python scripts/check_gpu.py
+
+== torch ==
+  torch            2.13.0
+  built for CUDA   12.9
+  cuda.is_available True
+
+== device ==
+  name             NVIDIA GeForce RTX 4080 Laptop GPU
+  compute cap      8.9
+  multiprocessors  58
+  total VRAM       11.57 GB
+  free VRAM        10.10 GB
+  bf16 supported   True
+
+== precision settings this repo will use ==
+  autocast dtype   bf16
+  grad scaler      off
+  matmul tf32      True
+  cudnn tf32       True
+  cudnn benchmark  True
+  matmul precision high
+
+== defaults picked for this machine ==
+  batch size       8   (override with --batch-size)
+  dataloader workers 8   (override with --num-workers)
+
+== benchmark ==
+  fp32 4096^2 matmul 20.34 TFLOP/s
+  peak VRAM in bench 0.20 GB
+
+Looks usable. Next: pytest -q tests, then the synthetic smoke test.
