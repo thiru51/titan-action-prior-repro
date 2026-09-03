@@ -1,5 +1,10 @@
 # Data and outputs
-data/
+# data/* rather than data/, because git will not look inside an excluded
+# directory and so cannot see the un-ignore rule below it.
+data/*
+# ETH/UCY is public, small (7 MB) and the only real data this repo can run on,
+# so it is committed to make RESULTS.md verifiable from a clean clone.
+!data/datasets/
 checkpoints/
 runs/
 outputs/
