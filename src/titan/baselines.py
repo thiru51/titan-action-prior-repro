@@ -34,3 +34,28 @@ def constant_velocity(
 
     steps = torch.arange(1, pred_len + 1, device=obs_boxes.device, dtype=obs_boxes.dtype)
     return last.unsqueeze(-2) + vel.unsqueeze(-2) * steps.view(-1, 1)
+
+
+def linear_least_squares(obs: torch.Tensor, pred_len: int) -> torch.Tensor:
+    """Least-squares straight-line extrapolation. obs: (..., T, D) -> (..., pred_len, D).
+
+    Social-GAN's "Linear" row fits its line by minimising squared error over the
+    whole observed window, not by differencing the last two steps. Both are
+    "linear", they are not the same estimator, so both are here and results are
+    labelled with which one produced them.
+    """
+    t = obs.shape[-2]
+    if t < 2:
+        raise ValueError("need at least two observed steps to fit a line")
+
+    steps = torch.arange(t, device=obs.device, dtype=obs.dtype)
+    mean_t = steps.mean()
+    centred = steps - mean_t
+    denom = (centred * centred).sum().clamp_min(1e-12)
+
+    mean_xy = obs.mean(dim=-2, keepdim=True)
+    slope = (centred.unsqueeze(-1) * (obs - mean_xy)).sum(dim=-2) / denom
+    intercept = mean_xy.squeeze(-2) - slope * mean_t
+
+    future_t = torch.arange(t, t + pred_len, device=obs.device, dtype=obs.dtype)
+    return intercept.unsqueeze(-2) + slope.unsqueeze(-2) * future_t.view(-1, 1)
