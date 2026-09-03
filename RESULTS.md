@@ -326,3 +326,101 @@ numbers are not a single lucky draw, and it should be read as nothing more.
 
 The blocker is unchanged: TITAN reproduction needs the gated dataset. See
 `HANDOFF.md`.
+
+---
+
+# Part 2: testing the action-prior claim in CARLA
+
+TITAN's central claim is that priors on ego-motion, interaction and action each
+improve short-horizon forecasting, and that all three together are best. On the real
+TITAN data those action labels are hand-annotated. In a simulator they are exact, and
+every prior can be switched off cleanly, so the claim can be tested rather than argued.
+
+**This is synthetic data with ground-truth labels, and the action prior is the
+contextual group only** -- crossing, waiting, hesitating, derived from the per-frame
+road-occupancy string. CARLA has no communicative gestures (looking-at-traffic,
+phone-distracted, waving-through), which are part of TITAN's action prior. So this
+tests a weaker form of the claim. None of it is a TITAN result.
+
+## Setup
+
+| | |
+|---|---|
+| Data | 214 CARLA episodes from the sibling pedestrian project |
+| Split | **by episode** -- 161 train / 53 test, disjointness asserted |
+| Windows | 3,958 train / 1,388 test |
+| Protocol | 10 observed / 20 predicted at 20 Hz = 0.5 s observed, 1.0 s predicted |
+| Seeds | 3 per row, identical schedule and data for every row |
+| Units | pixels at the recorded 1280x720 |
+
+## The seven rows
+
+| priors | ADE | FDE |
+|---|---|---|
+| vanilla | 28.45 +-3.68 | 54.00 +-5.50 |
+| **AP** | **20.21 +-0.73** | **39.97 +-2.85** |
+| EP | 24.25 +-3.66 | 47.12 +-6.56 |
+| IP | 29.60 +-4.25 | 56.72 +-8.61 |
+| EP+AP | 24.97 +-5.97 | 49.28 +-11.90 |
+| EP+IP | 33.38 +-13.14 | 66.31 +-25.45 |
+| EP+IP+AP | 30.23 +-4.84 | 59.16 +-16.18 |
+
+Gain over vanilla, ADE pixels, positive is better: **AP +8.24, EP +4.20, IP -1.15.**
+
+## What this says, and where it disagrees with the paper
+
+**The action prior is the strongest single prior here, and the best row overall.**
+That is the part that agrees with TITAN's emphasis on action semantics.
+
+**Everything else disagrees.** The paper's own ablation (Malla, Dariush & Choi, CVPR
+2020, Table 2 -- their numbers, not ours) has IP as the strongest single prior at 22.53
+ADE against EP 29.42 and AP 33.54, and every combination monotonically better, ending at
+EP+IP+AP 11.32. Here the ordering is AP > EP > IP, IP alone is *worse than no prior at
+all*, and no combination beats AP by itself.
+
+**The interaction result has a measured cause.** 4,699 of 5,346 windows contain exactly
+one agent; the mean is 1.12. There is almost nothing to interact with. IP adds
+parameters and a pooling path that see no signal, so it costs accuracy and adds variance
+-- note EP+IP's standard deviation of 13.14, the widest in the table. TITAN's Tokyo
+footage has crowded pavements. This does not contradict the paper; it says the scripted
+CARLA scenarios collected here are the wrong data on which to test an interaction prior.
+
+**The action result should be read sceptically, and this is the honest caveat.** CARLA's
+contextual label is derived from whether the walker is on the road polygon. The future
+trajectory is determined by largely the same geometry. So the label is closer to a
+partial readout of the answer than to an independent behavioural cue, and AP's +8.24 is
+probably an upper bound rather than a fair estimate of what action semantics buy. On
+TITAN the labels are human annotations of observed behaviour, which is a genuinely
+different signal. Testing that properly needs the real dataset.
+
+## Reproducing
+
+```bash
+python scripts/eval_carla_priors.py --epochs 12 --seeds 0 1 2
+```
+
+154 seconds on a 12 GB GPU. Writes `artifacts/carla_priors.json` with per-seed ADE and
+FDE for all seven rows, so the means above can be recomputed rather than trusted. The
+episode recordings live in the sibling `pedestrian-intent-forecast` repository; point
+`--root` at them.
+
+**A unit trap worth recording.** The network works in normalised [0, 1] box coordinates
+and `CarlaDataset.scale` exists to convert back. A first version of the runner omitted
+it and reported ADE around 0.03 -- correct arithmetic, meaningless units, and small
+enough to look like a triumph. Anything reported in pixels must be scaled first.
+
+## Honest limits
+
+**One simulator, one town, scripted scenarios.** All episodes are Town10HD_Opt with four
+scripted crossing behaviours and a single camera setup.
+
+**Nearly single-agent.** 88% of windows have one agent, which makes this dataset unable
+to say anything useful about interaction modelling.
+
+**Restricted action prior.** Contextual group only, and derived from geometry that also
+determines the trajectory. See the caveat above.
+
+**Still not a TITAN reproduction.** That needs the gated dataset. What Parts 1 and 2
+establish is that the trajectory decoder and metrics are correct on a public benchmark,
+and that the ablation harness runs end to end and produces an interpretable ordering on
+data where the ground truth is exact.

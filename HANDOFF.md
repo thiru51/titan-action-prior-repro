@@ -1,6 +1,31 @@
-# Handoff
+# Handoff notes
 
-Notes for whoever picks this up, including me in three months.
+The README explains the idea, [RESULTS.md](RESULTS.md) has the measured numbers. This file
+is about the state of the code and the decisions behind it.
+
+## Where things stand
+
+TITAN itself is still not reproduced -- the dataset is access-gated and nothing has come
+back. What exists instead are two experiments on data that *is* available, and they make
+the reimplementation checkable rather than merely written.
+
+**Part 1 (ETH/UCY)** validates the trajectory decoder and the metric code against a public
+benchmark, so the same code path TITAN runs on is known to be correct.
+
+**Part 2 (CARLA)** runs the seven-row ablation with exact labels. Action prior strongest
+(+8.24 ADE), interaction prior worse than nothing, no combination beating AP alone.
+
+Three things worth knowing before touching this:
+
+- **The interaction result is a property of the data, not the model.** 4,699 of 5,346
+  windows have exactly one agent. Any conclusion about interaction modelling from this
+  dataset is unsupported. Collect multi-pedestrian CARLA scenarios before revisiting it.
+- **The action result is probably an upper bound.** CARLA's contextual label comes from
+  road-polygon occupancy, and the future trajectory is set by largely the same geometry,
+  so the label is nearer a readout than an independent cue.
+- **Boxes are normalised; ADE/FDE are pixels.** `CarlaDataset.scale` converts. A first
+  version of the runner omitted it and reported ADE 0.03 -- right arithmetic, wrong units,
+  and small enough to look like a win.
 
 ## Where it stands
 

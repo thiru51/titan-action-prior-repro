@@ -141,6 +141,35 @@ def train_one(
     return net
 
 
+def prior_content(datasets) -> dict[str, float]:
+    """How much each prior actually has to say on this data.
+
+    A prior cannot help if its input is the same in every window, so these
+    three fractions are needed to read the ablation table at all. They are
+    measured over the test split of every fold, i.e. over exactly the windows
+    the reported ADE/FDE average over.
+    """
+    from titan.data.carla import ACTION_CROSSING, AGENT_PERSON
+
+    windows = [w for _, _, test in datasets for w in test.windows]
+    n = max(len(windows), 1)
+    varies = 0
+    ends_crossing = 0
+    has_neighbour = 0
+    for w in windows:
+        ped = w.obs_actions[(w.agent_class == AGENT_PERSON) & w.agent_mask]
+        if ped.size:
+            varies += int(len(set(ped[0].tolist())) > 1)
+            ends_crossing += int(ped[0][-1] == ACTION_CROSSING)
+        has_neighbour += int(w.agent_mask.sum() > 1)
+    return {
+        "test_windows": float(len(windows)),
+        "action_label_varies_within_observation": varies / n,
+        "action_label_is_crossing_at_last_observed_step": ends_crossing / n,
+        "window_has_a_second_agent": has_neighbour / n,
+    }
+
+
 def build_folds(cfg: CarlaConfig, num_folds: int):
     """-> list of (train, val, test) episode-id lists, one per fold."""
     episodes = usable_episodes(cfg)
@@ -209,6 +238,17 @@ def main() -> None:
             f"test pedestrian-windows {d[2].num_targets}"
         )
     scale = datasets[0][2].scale
+    content = prior_content(datasets)
+    print("\n  How much each prior has to say, over the pooled test windows:")
+    print(
+        f"    action label varies inside the observed window: "
+        f"{content['action_label_varies_within_observation']:.1%}"
+    )
+    print(
+        f"    action label is 'crossing' at the last observed step: "
+        f"{content['action_label_is_crossing_at_last_observed_step']:.1%}"
+    )
+    print(f"    window holds a second agent: {content['window_has_a_second_agent']:.1%}")
     print()
 
     # per config -> per seed -> per fold -> {ADE, FDE}
@@ -299,6 +339,7 @@ def main() -> None:
                 "grad_clip": args.grad_clip,
                 "seeds": args.seeds,
             },
+            "prior_content": content,
             "per_run": results,
             "summary": summary,
         }

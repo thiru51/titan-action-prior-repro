@@ -21,6 +21,15 @@ in [Getting the dataset](#getting-the-dataset)). What has actually happened:
 - The synthetic data is random walks with noise. Every FDE it produces is a
   number about random walks, not about pedestrians. `artifacts/smoke_test.log`
   is the real captured output of that run and is labelled as such throughout.
+- **Two experiments have now been run on data that is available.** Part 1 validates the
+  trajectory decoder and the ADE/FDE metrics on the public ETH/UCY benchmark. Part 2 runs
+  the seven-row EP/IP/AP ablation on CARLA trajectories, where the labels are exact.
+  Both are in [RESULTS.md](RESULTS.md). Neither is a TITAN result.
+- **The CARLA ablation disagrees with the paper's ordering, and the reason is measurable.**
+  Action prior is the strongest single prior here (+8.24 ADE over vanilla) and the best row
+  overall; interaction prior is *worse than no prior*. 4,699 of 5,346 windows contain
+  exactly one agent, so there is nothing for an interaction prior to model. The paper's
+  Tokyo footage has crowded pavements; these scripted scenarios do not.
 - The action branch runs `torchvision`'s `r3d_18`, not I3D. See
   [What is substituted](#what-is-substituted-and-why).
 - **There is now one real result on real data, and it is not TITAN.** The

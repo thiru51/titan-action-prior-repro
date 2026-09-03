@@ -1,5 +1,20 @@
 # Progress
 
+**Summary: the code is validated and two experiments have been run, but TITAN itself is
+still not reproduced.** The dataset remains access-gated.
+
+**Part 1, ETH/UCY.** The trajectory decoder and ADE/FDE metrics are validated on a public
+benchmark: constant-velocity 0.53 m ADE, LSTM encoder-decoder 0.58 m, leave-one-scene-out.
+Two published qualitative findings reproduce -- the hotel-scene inversion, and social
+pooling giving no measurable gain.
+
+**Part 2, CARLA.** All seven EP/IP/AP rows run on simulator trajectories with exact
+labels, 3 seeds, split by episode. Action prior is strongest (+8.24 ADE over vanilla),
+interaction prior is worse than nothing because 88% of windows have a single agent. The
+ordering disagrees with the paper's, for a measured reason.
+
+Both write-ups, with their caveats, are in [RESULTS.md](RESULTS.md).
+
 ## Status in one paragraph
 
 The implementation is written and runs. **No result in this repo is a
