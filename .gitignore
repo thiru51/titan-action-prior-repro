@@ -1,10 +1,16 @@
 # Data and outputs
-# data/* rather than data/, because git will not look inside an excluded
-# directory and so cannot see the un-ignore rule below it.
-data/*
+# /data/* rather than data/, for two reasons. The trailing /* is because git
+# will not look inside an excluded directory and so cannot see the un-ignore
+# rules below it. The leading / anchors the rule to the repository root, so a
+# source directory that happens to be called "data" further down the tree is
+# not silently excluded -- which has already happened in sibling repos.
+/data/*
 # ETH/UCY is public, small (7 MB) and the only real data this repo can run on,
 # so it is committed to make RESULTS.md verifiable from a clean clone.
-!data/datasets/
+!/data/datasets/
+# CARLA episode annotations, 12 MB, no images. Committed for the same reason:
+# the prior-ablation table in RESULTS.md has to be reproducible from a clone.
+!/data/carla_run/
 checkpoints/
 runs/
 outputs/
