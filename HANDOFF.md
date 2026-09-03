@@ -15,6 +15,12 @@ benchmark, so the same code path TITAN runs on is known to be correct.
 **Part 2 (CARLA)** runs the seven-row ablation with exact labels. Action prior strongest
 (+8.24 ADE), interaction prior worse than nothing, no combination beating AP alone.
 
+**One runner, not two.** An earlier draft left a second ablation script,
+`scripts/eval_carla.py`, alongside `scripts/eval_carla_priors.py`. It was never run and
+its artifact never existed, so it has been removed. The numbers in RESULTS.md come from
+`eval_carla_priors.py` and `artifacts/carla_priors.json`; if you add another runner, delete
+the old one rather than leaving an unrun script that looks authoritative.
+
 Three things worth knowing before touching this:
 
 - **The interaction result is a property of the data, not the model.** 4,699 of 5,346
