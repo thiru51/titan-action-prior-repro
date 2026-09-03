@@ -2,15 +2,40 @@
 
 ## Status in one paragraph
 
-The implementation is written and runs. I have verified the full pipeline runs
-end-to-end on synthetic data; a real training run against the actual TITAN
-dataset is the next step once access is granted. **No result in this repo is a
+The implementation is written and runs. **No result in this repo is a
 reproduction of the paper's numbers.** The paper's published figures
 (constant-velocity 102.5 px FDE, full EP+IP+AP 19.5 px FDE, Social-GAN 69.4 px,
 Social-LSTM 66.8 px) are the *targets* this implementation aims to reproduce —
 they were measured by the authors on the real dataset. Real reproduction needs
 TITAN dataset access, which is gated behind a request at
-<https://usa.honda-ri.com/titan> and **has not been obtained**.
+<https://usa.honda-ri.com/titan> and **has not been obtained**. What has
+changed: there is now one real measured result, on **ETH/UCY**, the public
+benchmark TITAN's own baselines publish on. It validates the ADE/FDE metric
+code and the trajectory decoding recipe against real human trajectories with
+published figures to check against. It is a different dataset and a different
+task, so it is not a TITAN result and is never presented as one. Full write-up
+in `RESULTS.md`.
+
+## The ETH/UCY result
+
+ADE / FDE in metres, 8 observed / 12 predicted, leave-one-scene-out, averaged
+over the five scenes. Measured here, seed 0. **Not TITAN numbers.**
+
+| model | AVG ADE | AVG FDE |
+|---|---|---|
+| Constant velocity | 0.53 | 1.15 |
+| Linear, least squares | 0.65 | 1.27 |
+| LSTM encoder-decoder | 0.58 | 1.23 |
+| LSTM + social pooling | 0.56 | 1.17 |
+
+Gupta et al. (CVPR 2018, Table 1, t_pred = 12) report their Linear row at
+0.79 / 1.59 and their LSTM row at 0.70 / 1.52. Mine are 10-25% lower. The gap
+is analysed in `RESULTS.md` and left standing rather than tuned away.
+
+The two learned rows are one seed each. A second seed reverses their ordering
+(LSTM 0.55 / 1.16, social pooling 0.58 / 1.21), so the difference between them
+is smaller than the difference between seeds and no claim is made that social
+pooling helps.
 
 ## Environment
 
@@ -45,7 +70,14 @@ TITAN dataset access, which is gated behind a request at
       action loss, ego MSE.
 - [x] Metrics: ADE / FDE / FIOU in pixels, always computed in fp32. FDE uses
       each track's last *valid* step, not blindly index -1.
-- [x] Constant-velocity baseline.
+- [x] Constant-velocity baseline, plus a least-squares linear baseline added
+      for ETH/UCY (they are different estimators and are reported separately).
+- [x] ETH/UCY loader (`data/ethucy.py`), completely separate from the TITAN
+      path: 8/12 windows at 2.5 Hz, leave-one-scene-out, people dropped rather
+      than interpolated when a track is incomplete.
+- [x] LSTM encoder-decoder with optional social pooling
+      (`models/traj_lstm.py`), for ETH/UCY only. `titan_net.py` untouched.
+- [x] `scripts/eval_ethucy.py` — runs the five folds and prints the table.
 - [x] EP / IP / AP switches; all seven ablation rows constructible and runnable.
 - [x] CLI: `train`, `eval`, `smoke`, `ablation`, `paper`.
 - [x] The paper's numbers live in one module and are never printed without a
@@ -73,8 +105,19 @@ TITAN dataset access, which is gated behind a request at
 
 ## Verification actually performed
 
-- [x] `pytest -q tests` — 44 passed, 1 skipped. The skip only runs on a machine
+- [x] `pytest -q tests` — 54 passed, 1 skipped. The skip only runs on a machine
       without CUDA. Captured in `artifacts/tests.log`.
+- [x] **ETH/UCY benchmark run on real data**, all five leave-one-scene-out
+      folds, four models. Captured in `artifacts/ethucy_eval.log` and
+      `artifacts/ethucy.json`. Reproduce with the command in `RESULTS.md`.
+      The two baseline rows need no training and reproduce bit for bit.
+- [x] Sensitivity check on the Social-GAN loader's drop-single-person-windows
+      quirk (`artifacts/ethucy_min_agents_2.json`). It moves the linear average
+      ADE from 0.65 to 0.62, which is real but too small to explain the gap to
+      the published figure.
+- [x] Second training seed for the two learned rows
+      (`artifacts/ethucy_seed1.json`), so the learned numbers are not a single
+      draw. Two seeds is a sanity check, not a variance estimate.
 - [x] `scripts/check_gpu.py` — captured in `artifacts/check_gpu.log`.
 - [x] Full synthetic smoke test, all seven ablation configurations, 2 epochs
       each, on GPU with bf16. Captured in `artifacts/smoke_test.log`.
@@ -90,7 +133,8 @@ TITAN dataset access, which is gated behind a request at
 ## Open
 
 - [ ] **TITAN dataset access.** Not requested-and-granted. This blocks
-      everything below. Request at <https://usa.honda-ri.com/titan>.
+      everything below. The ETH/UCY result does *not* unblock any of it; it
+      checks the metric and the decoder, nothing about action priors. Request at <https://usa.honda-ri.com/titan>.
 - [ ] Run the loader against real tarballs. It has never seen a real TITAN CSV.
       Expect the first run to be a debugging session — column names and frame
       filename padding are the likely friction.
@@ -106,3 +150,9 @@ TITAN dataset access, which is gated behind a request at
 - [ ] Tune. Nothing has been tuned; the hyperparameters in
       `configs/default.yaml` are reasonable defaults, not searched values.
 - [ ] Try `--compile` on a long run and record whether it actually pays off.
+- [ ] Hyperparameter search on ETH/UCY. Nothing was tuned there either; the
+      LSTM rows use one fixed setting on all five folds.
+- [ ] Track down the zara2 discrepancy against the published Linear row (0.46
+      here against 0.77 reported). My best guess is a difference in which
+      frames land in which split, which needs the exact preprocessed files
+      Gupta et al. used. Not resolvable from the paper alone.

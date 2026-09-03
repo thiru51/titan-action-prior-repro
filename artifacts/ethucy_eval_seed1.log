@@ -1,0 +1,35 @@
+ETH/UCY  obs=8 pred=12 (2.5 Hz)  leave-one-scene-out  min_agents=1  device=cuda
+Metrics in metres, computed by titan.metrics.ForecastMetrics.
+
+  training lstm on the four scenes that are not eth ...
+  eth    lstm         ADE 1.029  FDE 2.089  (n=364)
+  training social_lstm on the four scenes that are not eth ...
+  eth    social_lstm  ADE 1.037  FDE 2.149  (n=364)
+  training lstm on the four scenes that are not hotel ...
+  hotel  lstm         ADE 0.447  FDE 0.896  (n=1197)
+  training social_lstm on the four scenes that are not hotel ...
+  hotel  social_lstm  ADE 0.534  FDE 1.081  (n=1197)
+  training lstm on the four scenes that are not univ ...
+  univ   lstm         ADE 0.579  FDE 1.265  (n=24334)
+  training social_lstm on the four scenes that are not univ ...
+  univ   social_lstm  ADE 0.586  FDE 1.239  (n=24334)
+  training lstm on the four scenes that are not zara1 ...
+  zara1  lstm         ADE 0.400  FDE 0.869  (n=2356)
+  training social_lstm on the four scenes that are not zara1 ...
+  zara1  social_lstm  ADE 0.405  FDE 0.861  (n=2356)
+  training lstm on the four scenes that are not zara2 ...
+  zara2  lstm         ADE 0.314  FDE 0.699  (n=5910)
+  training social_lstm on the four scenes that are not zara2 ...
+  zara2  social_lstm  ADE 0.329  FDE 0.716  (n=5910)
+
+==============================================================================
+ADE / FDE in metres, 8 observed / 12 predicted, lower is better.
+Measured by this repo on ETH/UCY. NOT TITAN results.
+
+model                   eth        hotel         univ        zara1        zara2          AVG
+--------------------------------------------------------------------------------------------
+lstm            1.03/2.09    0.45/0.90    0.58/1.26    0.40/0.87    0.31/0.70    0.55/1.16  
+social_lstm     1.04/2.15    0.53/1.08    0.59/1.24    0.40/0.86    0.33/0.72    0.58/1.21  
+
+wall clock 1058s
+wrote artifacts/ethucy_seed1.json

@@ -4,12 +4,19 @@ Notes for whoever picks this up, including me in three months.
 
 ## Where it stands
 
-Everything is implemented and runs on GPU. Nothing has touched real TITAN data.
-I verified the full pipeline runs end-to-end on synthetic data; a real training
-run against the actual TITAN dataset is the next step once access is granted.
+Everything is implemented and runs on GPU. **Nothing has touched real TITAN
+data** — that is still blocked on dataset access.
 
-Read `README.md` first for how to run it, `END_GOAL.md` for what finished looks
-like, `PROGRESS.md` for the checklist.
+There is now one real measured result, and it is on a different dataset:
+ETH/UCY, the public benchmark TITAN's own Social-LSTM and Social-GAN baselines
+publish on. It exists to answer the obvious challenge to this repo — you
+reimplemented a paper you cannot run, so how does anyone know the code is
+right? Running the repo's ADE/FDE code and its decoding recipe on a public
+benchmark with published numbers is the best available answer. Read
+`RESULTS.md` for the table, the citations and the honest account of the gap.
+
+Read `README.md` first for how to run it, `RESULTS.md` for the one real result,
+`END_GOAL.md` for what finished looks like, `PROGRESS.md` for the checklist.
 
 ## The one blocker: dataset access
 
@@ -38,13 +45,16 @@ data" section. `data.root` defaults to `data/titan`.
    filename zero-padding (`data/video.py::_find_frame` tries several widths).
    Expect this to be a debugging session.
 
-2. **Run the constant-velocity baseline on real data before training anything.**
+2. **Run the constant-velocity baseline on real TITAN data before training
+   anything.**
    Every epoch prints it, but you can get it out of an untrained model with
    `titan.cli eval`. The paper reports 102.47 px FDE. If yours is not in that
    neighbourhood, something in the loading or the eval protocol is wrong —
    frame rate subsampling, box coordinate convention, the pixel scale — and
    every number after it will be wrong too. This is the cheapest possible check
-   and it needs no training at all. Do not skip it.
+   and it needs no training at all. Do not skip it. The ETH/UCY run already did
+   the equivalent check for the metric code itself, so if the TITAN
+   constant-velocity number comes out wrong, suspect the TITAN loader first.
 
 3. **Then train `EP+IP+AP`.** Then the full ablation.
 
@@ -52,6 +62,35 @@ data" section. `data.root` defaults to `data/titan`.
    prior adds something. If you get the ordering right but weaker absolute
    numbers, that is a partial reproduction and should be written up as exactly
    that. Do not round it up into a claim of reproduction.
+
+## The ETH/UCY path, and why it is separate
+
+`src/titan/data/ethucy.py`, `src/titan/models/traj_lstm.py` and
+`scripts/eval_ethucy.py` are a second, independent path through this repo. They
+share exactly two things with the TITAN code: `metrics.py` and
+`baselines.py`. That sharing is the entire point — those two modules are what
+the ETH/UCY run is checking, so validating them there validates them here.
+
+Nothing in `titan_net.py`, `titan.py`, `engine.py` or `config.py` was changed to
+make ETH/UCY work, deliberately. If ETH/UCY needed the TITAN model bent to fit
+it, the result would not tell you anything about the TITAN model.
+
+Two decisions in that loader worth knowing about:
+
+- **Windows are cut over positions in the sorted frame list, not raw frame
+  numbers.** The recordings have gaps where nobody is in view, and the
+  reference loaders everyone compares against index by list position, so a
+  window can silently span a gap. I kept that behaviour because departing from
+  it would make the numbers incomparable, and documented it instead.
+
+- **`min_agents` defaults to 1, keeping windows that hold a single person.**
+  The widely-copied Social-GAN loader uses 2, which drops those windows. The
+  difference is measurable, mostly on the sparse eth scene, and is quantified
+  in `RESULTS.md`. Rerun with `--min-agents 2` to see it.
+
+The ETH/UCY numbers are in metres and TITAN's are in pixels. They must never
+appear in the same table. `RESULTS.md` and the README both say so explicitly;
+keep it that way.
 
 ## Design decisions worth defending
 
@@ -147,8 +186,21 @@ reported numbers.
   `cuda-cudart-dev` in `pixi.toml`. On the pip path you may need the CUDA
   toolkit headers.
 
-- **`checkpoints/` and `data/` are gitignored.** So are `*.pt`. Only
-  `artifacts/` is committed, and it holds captured stdout, not weights.
+- **A bare `data/` in gitignore was excluding `src/titan/data/` too.** Gitignore
+  patterns without a slash in the middle match at any depth, so `data/` matched
+  the source package as well as the dataset directory, and the whole loader
+  package was never committed. Nothing warned about it, because the files were
+  present locally the entire time; a clean clone could not import `titan` at
+  all. Fixed by changing the rule to `data/*` and committing the six modules.
+  Worth remembering: `git ls-files` is the only thing that tells you what is
+  actually in the repo, and a fresh clone is the only thing that proves it runs.
+
+- **`checkpoints/` and most of `data/` are gitignored.** So are `*.pt`. The one
+  exception is `data/datasets/`, the ETH/UCY files — public, 7 MB, and
+  committed on purpose so the `RESULTS.md` table can be reproduced from a clean
+  clone with no download. Note the rule is `data/*` and not `data/`: git will
+  not look inside an excluded directory, so `data/` would make the un-ignore
+  rule below it dead.
 
 - **Turning off AP turns off image loading entirely.** In
   `engine.build_dataset`. Decoding PNG crops dominates load time and nothing
@@ -177,6 +229,14 @@ So:
 
 - The paper's numbers live in `src/titan/paper.py` and are never printed
   without a header saying the authors measured them, not this code.
+- The same discipline applies to ETH/UCY. Every published figure in
+  `RESULTS.md` names the paper and the table it came from, and was read out of
+  the paper itself rather than recalled or copied from a blog. Where a source
+  is ambiguous — the Social-LSTM table states no units and defines its ADE as
+  an MSE — the ambiguity is written down and the comparison is *not* made,
+  rather than being made on a guess.
+- ETH/UCY results are labelled ETH/UCY results everywhere they appear, in
+  metres, and are never mixed into a TITAN table.
 - Synthetic runs print a banner at the start, tag every summary line
   `[synthetic]`, print a warning at the end, and set `"synthetic": true` in
   `history.json`. Four places, on purpose.

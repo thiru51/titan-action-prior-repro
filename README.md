@@ -12,7 +12,7 @@ table can be run row by row.
 dataset is access-gated and I have not been granted access yet (request process
 in [Getting the dataset](#getting-the-dataset)). What has actually happened:
 
-- The code is written, the tests pass (44 passed, 1 skipped), and I have
+- The code is written, the tests pass (54 passed, 1 skipped), and I have
   verified the full pipeline runs end-to-end on synthetic data — data loader to
   action branch to interaction encoder to Agent Importance Mechanism to GRU
   decoder to the FDE metric — for all seven ablation configurations. A real
@@ -23,6 +23,10 @@ in [Getting the dataset](#getting-the-dataset)). What has actually happened:
   is the real captured output of that run and is labelled as such throughout.
 - The action branch runs `torchvision`'s `r3d_18`, not I3D. See
   [What is substituted](#what-is-substituted-and-why).
+- **There is now one real result on real data, and it is not TITAN.** The
+  trajectory decoder and the ADE/FDE metric code have been run on ETH/UCY, a
+  public benchmark, and compared against published figures. See
+  [The one real result](#the-one-real-result-ethucy) and `RESULTS.md`.
 
 The numbers in the next section are **the paper's own published results**. They
 are the target this implementation aims to reproduce. They were measured by the
@@ -52,6 +56,62 @@ comfortably past both the Social-LSTM and Social-GAN reference rows. Those are
 the paper's claims. `python -m titan.cli paper` prints this same table from
 `src/titan/paper.py`, always with the "reported by the authors, not measured
 here" header attached.
+
+## The one real result: ETH/UCY
+
+Since TITAN itself is gated, the obvious question about this repo is: *you
+reimplemented a paper you cannot run, so how would anyone know the code is
+right?* The answer is a public benchmark.
+
+ETH/UCY is five scenes of real pedestrian trajectories in world metres, and it
+is what TITAN's own two baselines — Social-LSTM and Social-GAN — publish on. I
+ran the parts of this repo that are not TITAN-specific on it: the ADE/FDE code
+in `src/titan/metrics.py`, and the decoding recipe the TITAN decoder uses
+(encode the past, decode per-step deltas, integrate onto the last observed
+position). The protocol is the standard one: 8 observed steps and 12 predicted
+at 2.5 Hz, leave-one-scene-out over the five scenes.
+
+ADE / FDE in **metres**, averaged over the five folds. **Measured by this repo
+on ETH/UCY. These are not TITAN numbers and they are not comparable to the
+pixel table above.**
+
+| model | AVG ADE | AVG FDE |
+|---|---|---|
+| Constant velocity (`titan.baselines`) | 0.53 | 1.15 |
+| Linear, least squares | 0.65 | 1.27 |
+| LSTM encoder-decoder | 0.58 | 1.23 |
+| LSTM + social pooling | 0.56 | 1.17 |
+
+The two baseline rows are deterministic. The two learned rows are one training
+seed each, and rerunning with a different seed moves them by more than the gap
+between them — so this table does **not** show that social pooling helps, and
+`RESULTS.md` says so.
+
+For context, Gupta et al. (CVPR 2018) report **their** Linear row at 0.79 / 1.59
+and **their** LSTM row at 0.70 / 1.52 on the same protocol. Mine come out
+10-25% lower. `RESULTS.md` has the per-scene breakdown, the exact table and
+caption those figures come from, and an honest account of why the gap exists —
+including the fact that "linear baseline" is under-specified enough that my own
+two linear rows disagree with each other by 0.12 ADE.
+
+Data is committed under `data/datasets/` (7 MB), so this runs from a clean
+clone with no download:
+
+```bash
+PYTHONPATH=src .pixi/envs/default/bin/python scripts/eval_ethucy.py \
+    --models const_vel linear lstm social_lstm \
+    --epochs 200 --seed 0 \
+    --out artifacts/ethucy.json
+```
+
+About 17 minutes on an RTX 4080 Laptop. The two baseline rows need no training
+and reproduce exactly. Captured output: `artifacts/ethucy_eval.log`.
+
+This validates the metric implementation and the decoder on real human
+trajectory data. **It does not reproduce TITAN**, which still needs the gated
+dataset. The ETH/UCY path is entirely separate code — `data/ethucy.py`,
+`models/traj_lstm.py`, `scripts/eval_ethucy.py` — and nothing in the TITAN
+model was changed to accommodate it.
 
 ## Why this paper
 
@@ -342,8 +402,8 @@ pixi run pytest -q tests
 Expected:
 
 ```
-..s..........................................                            [100%]
-44 passed, 1 skipped in 3.12s
+..s....................................................                  [100%]
+54 passed, 1 skipped in 2.89s
 ```
 
 The skip is a test that only runs on a machine *without* CUDA (it checks that
@@ -660,12 +720,13 @@ src/titan/
 ├── engine.py            train and eval loops, AMP, throughput and VRAM logging
 ├── losses.py            masked smooth-L1 trajectory loss, uncertainty-weighted
 │                        action loss, ego MSE
-├── metrics.py           ADE / FDE / FIOU in pixels, always fp32
-├── baselines.py         constant-velocity extrapolation
+├── metrics.py           ADE / FDE / FIOU, always fp32; shared by both paths
+├── baselines.py         constant-velocity and least-squares-linear extrapolation
 ├── paper.py             the paper's published numbers, clearly labelled as theirs
 ├── data/
 │   ├── schema.py        TITAN CSV columns, action taxonomy, split sizes
 │   ├── titan.py         the real dataset loader (untested against real data)
+│   ├── ethucy.py        ETH/UCY loader; the public benchmark, separate path
 │   ├── synthetic.py     fake data for the smoke test, loudly labelled
 │   ├── video.py         per-agent tube cropping and normalisation
 │   └── common.py        box conversions, pixel <-> normalised, collate
@@ -673,11 +734,14 @@ src/titan/
     ├── titan_net.py     the whole network and the prior switches
     ├── action_branch.py r3d_18 backbone + 5 action heads          [AP]
     ├── interaction.py   masked attention with spatial bias        [IP]
-    └── aim.py           Agent Importance Mechanism
+    ├── aim.py           Agent Importance Mechanism
+    └── traj_lstm.py     LSTM encoder-decoder + social pooling, for ETH/UCY only
 
 scripts/check_gpu.py     the doctor script; run this first
+scripts/eval_ethucy.py   the ETH/UCY benchmark; produces the RESULTS.md table
 configs/default.yaml     the paper's protocol as defaults
-tests/                   schema, metrics, model, device
+tests/                   schema, metrics, model, device, ETH/UCY
+data/datasets/           ETH/UCY, committed (7 MB) so RESULTS.md is verifiable
 artifacts/               captured real output from actual runs
 
 pixi.toml, pixi.lock     install path A, fully locked
@@ -685,8 +749,9 @@ requirements.txt         install path B, lower bounds
 Dockerfile               install path C; not build-verified, see Install
 ```
 
-Docs: `END_GOAL.md` (what done looks like), `PROGRESS.md` (what is and is not
-built), `HANDOFF.md` (design decisions and what to do next).
+Docs: `RESULTS.md` (the ETH/UCY result and how it compares to published
+figures), `END_GOAL.md` (what done looks like), `PROGRESS.md` (what is and is
+not built), `HANDOFF.md` (design decisions and what to do next).
 
 ## References
 
@@ -702,3 +767,10 @@ built), `HANDOFF.md` (design decisions and what to do next).
 - Carreira & Zisserman. *Quo Vadis, Action Recognition? A New Model and the
   Kinetics Dataset.* CVPR 2017. The I3D architecture the paper's action branch
   uses and this repo substitutes for.
+- Schöller, Aravantinos, Lay & Knoll. *What the Constant Velocity Model Can
+  Teach Us About Pedestrian Motion Prediction.* RA-L / ICRA 2020.
+  [arXiv:1903.07933](https://arxiv.org/abs/1903.07933). Why a constant-velocity
+  baseline is competitive on ETH/UCY, which is what happens in `RESULTS.md`.
+- Pellegrini, Ess, Schindler & Van Gool (ETH, ICCV 2009) and Lerner, Chrysanthou
+  & Lischinski (UCY, Eurographics 2007). The two source datasets behind the
+  five ETH/UCY scenes in `data/datasets/`.

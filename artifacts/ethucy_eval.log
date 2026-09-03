@@ -1,0 +1,47 @@
+ETH/UCY  obs=8 pred=12 (2.5 Hz)  leave-one-scene-out  min_agents=1  device=cuda
+Metrics in metres, computed by titan.metrics.ForecastMetrics.
+
+  eth    const_vel    ADE 1.075  FDE 2.282  (n=364)
+  eth    linear       ADE 1.182  FDE 2.382  (n=364)
+  training lstm on the four scenes that are not eth ...
+  eth    lstm         ADE 1.047  FDE 2.148  (n=364)
+  training social_lstm on the four scenes that are not eth ...
+  eth    social_lstm  ADE 1.018  FDE 2.088  (n=364)
+  hotel  const_vel    ADE 0.319  FDE 0.614  (n=1197)
+  hotel  linear       ADE 0.261  FDE 0.478  (n=1197)
+  training lstm on the four scenes that are not hotel ...
+  hotel  lstm         ADE 0.595  FDE 1.243  (n=1197)
+  training social_lstm on the four scenes that are not hotel ...
+  hotel  social_lstm  ADE 0.503  FDE 1.028  (n=1197)
+  univ   const_vel    ADE 0.524  FDE 1.165  (n=24334)
+  univ   linear       ADE 0.737  FDE 1.429  (n=24334)
+  training lstm on the four scenes that are not univ ...
+  univ   lstm         ADE 0.555  FDE 1.213  (n=24334)
+  training social_lstm on the four scenes that are not univ ...
+  univ   social_lstm  ADE 0.586  FDE 1.226  (n=24334)
+  zara1  const_vel    ADE 0.427  FDE 0.952  (n=2356)
+  zara1  linear       ADE 0.603  FDE 1.183  (n=2356)
+  training lstm on the four scenes that are not zara1 ...
+  zara1  lstm         ADE 0.400  FDE 0.869  (n=2356)
+  training social_lstm on the four scenes that are not zara1 ...
+  zara1  social_lstm  ADE 0.391  FDE 0.841  (n=2356)
+  zara2  const_vel    ADE 0.324  FDE 0.724  (n=5910)
+  zara2  linear       ADE 0.457  FDE 0.894  (n=5910)
+  training lstm on the four scenes that are not zara2 ...
+  zara2  lstm         ADE 0.298  FDE 0.657  (n=5910)
+  training social_lstm on the four scenes that are not zara2 ...
+  zara2  social_lstm  ADE 0.324  FDE 0.687  (n=5910)
+
+==============================================================================
+ADE / FDE in metres, 8 observed / 12 predicted, lower is better.
+Measured by this repo on ETH/UCY. NOT TITAN results.
+
+model                   eth        hotel         univ        zara1        zara2          AVG
+--------------------------------------------------------------------------------------------
+const_vel       1.08/2.28    0.32/0.61    0.52/1.17    0.43/0.95    0.32/0.72    0.53/1.15  
+linear          1.18/2.38    0.26/0.48    0.74/1.43    0.60/1.18    0.46/0.89    0.65/1.27  
+lstm            1.05/2.15    0.59/1.24    0.56/1.21    0.40/0.87    0.30/0.66    0.58/1.23  
+social_lstm     1.02/2.09    0.50/1.03    0.59/1.23    0.39/0.84    0.32/0.69    0.56/1.17  
+
+wall clock 1035s
+wrote artifacts/ethucy.json
